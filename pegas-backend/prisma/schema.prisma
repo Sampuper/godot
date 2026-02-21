@@ -1,0 +1,83 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id       Int     @id @default(autoincrement())
+  name     String
+  phone    String?
+  email    String  @unique
+  password String
+  isActive Boolean @default(true)
+
+  roles UserRole[]
+}
+
+model Role {
+  id    Int        @id @default(autoincrement())
+  code  String     @unique
+  name  String
+  users UserRole[]
+}
+
+model UserRole {
+  id     Int  @id @default(autoincrement())
+  user   User @relation(fields: [userId], references: [id])
+  userId Int
+  role   Role @relation(fields: [roleId], references: [id])
+  roleId Int
+
+  @@unique([userId, roleId])
+}
+
+model Workshop {
+  id     Int     @id @default(autoincrement())
+  name   String
+  orders Order[]
+}
+
+model Order {
+  id          Int       @id @default(autoincrement())
+  orderNumber String    @unique
+  crmId       String?
+  clientName  String
+  clientPhone String
+  carModel    String
+  complexity  String
+  workshopId  Int?
+  workshop    Workshop? @relation(fields: [workshopId], references: [id])
+  isSpecial   Boolean   @default(false)
+  status      String
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  stages  OrderStage[]
+  changes OrderChange[]
+}
+
+model OrderStage {
+  id          Int      @id @default(autoincrement())
+  order       Order    @relation(fields: [orderId], references: [id])
+  orderId     Int
+  stageType   String
+  status      String
+  confirmedBy Int?
+  confirmedAt DateTime?
+}
+
+model OrderChange {
+  id          Int      @id @default(autoincrement())
+  order       Order    @relation(fields: [orderId], references: [id])
+  orderId     Int
+  fieldName   String
+  oldValue    String
+  newValue    String
+  changedBy   Int
+  changedAt   DateTime @default(now())
+  isConfirmed Boolean  @default(false)
+}
